@@ -2,7 +2,7 @@
 </script>
 
 <template>
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
+  <section class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-8 mb-20">
     <div class="flex items-center gap-5 mb-10">
       <h2 class="text-xl font-medium tracking-wide whitespace-nowrap text-gray-900">LATEST POSTS</h2>
       <div class="h-2 flex-grow bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNlZWVlZWUiLz48L3N2Zz4=')] opacity-50"></div>

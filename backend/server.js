@@ -23,6 +23,7 @@ app.use('/api/products', require('./src/routes/products'));
 app.use('/api/reviews', require('./src/routes/reviews'));
 app.use('/api/home', require('./src/routes/home'));
 app.use('/api/about', require('./src/routes/about'));
+app.use('/api/contact', require('./src/routes/contact'));
 
 app.get('/', (req, res) => {
   res.send('ShopLite API is running...');

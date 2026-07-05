@@ -35,7 +35,7 @@ const prev = () => {
 </script>
 
 <template>
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-20 relative group">
+  <section class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-8 text-center mb-20 relative group">
     <h3 class="text-xl font-medium mb-8 tracking-wide text-gray-900">INSTAGRAM #SHOPLITE</h3>
     
     <div class="relative overflow-hidden">

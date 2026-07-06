@@ -78,7 +78,7 @@ const getStars = (rating: number = 0) => {
       <img 
         :src="getProductImage(product)" 
         :alt="product.title" 
-        class="w-4/5 h-4/5 object-contain group-hover:scale-105 transition-transform duration-500 ease-out mix-blend-multiply"
+        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out mix-blend-multiply"
         loading="lazy"
       />
       <!-- Hover Details Overlay Button -->

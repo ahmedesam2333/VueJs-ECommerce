@@ -8,6 +8,7 @@ import { useAuth } from '../composables/useAuth'
 import CheckoutBillingForm, { type BillingFormState } from '../components/CheckoutBillingForm.vue'
 import CheckoutAdditionalInfo from '../components/CheckoutAdditionalInfo.vue'
 import CheckoutOrderSummary from '../components/CheckoutOrderSummary.vue'
+import StripePayment from '../components/StripePayment.vue'
 import ReviewsSection from '../components/ReviewsSection.vue'
 import LatestPostsSection from '../components/LatestPostsSection.vue'
 import BrandsSection from '../components/BrandsSection.vue'
@@ -24,6 +25,7 @@ const {
   checkoutError, 
   orderDetails, 
   submitCheckout,
+  confirmStripeSuccess,
   resetCheckout
 } = useCart()
 
@@ -46,10 +48,17 @@ const form = ref<BillingFormState>({
 
 const orderNotes = ref('')
 
-// Prefill form from user on mount
+// Stripe payment refs
+const stripePublishableKey = ref('')
+const stripeClientSecret = ref('')
+const showStripePayment = ref(false)
+const pendingOrder = ref<any>(null)
+
+// Prefill form and load stripe key on mount
 onMounted(() => {
   resetCheckout()
   prefillForm()
+  fetchStripeKey()
 })
 
 // Watch user profile in case it loads asynchronously
@@ -65,6 +74,18 @@ function prefillForm() {
     if (!form.value.email) form.value.email = user.value.email || ''
     if (!form.value.phone && user.value.phone) form.value.phone = user.value.phone
     if (!form.value.streetAddress && user.value.address) form.value.streetAddress = user.value.address
+  }
+}
+
+const fetchStripeKey = async () => {
+  try {
+    const res = await fetch('http://localhost:5000/api/config/stripe-key')
+    if (res.ok) {
+      const data = await res.json()
+      stripePublishableKey.value = data.publishableKey
+    }
+  } catch (err) {
+    console.error('Failed to load Stripe publishable key:', err)
   }
 }
 
@@ -112,11 +133,25 @@ const handlePlaceOrder = async (paymentMethod: string) => {
       ? `${formattedAddress} | Note: ${orderNotes.value.trim()}`
       : formattedAddress
 
-    await submitCheckout(addressWithNotes, paymentMethod)
+    const result = await submitCheckout(addressWithNotes, paymentMethod)
+
+    // If Stripe payment is requested, show Stripe Payment Element step
+    if (paymentMethod === 'card' && result.clientSecret) {
+      stripeClientSecret.value = result.clientSecret
+      pendingOrder.value = result.order
+      showStripePayment.value = true
+    }
   } catch (err) {
     console.error('Order placement failed:', err)
   } finally {
     loading.value = false
+  }
+}
+
+const handleStripeSuccess = () => {
+  if (pendingOrder.value) {
+    confirmStripeSuccess(pendingOrder.value)
+    showStripePayment.value = false
   }
 }
 </script>
@@ -187,29 +222,43 @@ const handlePlaceOrder = async (paymentMethod: string) => {
       </div>
 
       <!-- ACTIVE CHECKOUT STATE -->
-      <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-        
-        <!-- Left Column: Billing Details & Cart Totals -->
-        <div class="space-y-16">
-          <!-- Billing Details Form -->
-          <CheckoutBillingForm v-model="form" :errors="errors" />
-
-          <!-- Cart Totals & Payments -->
-          <CheckoutOrderSummary 
-            :subtotal="subtotal"
-            :discount-amount="discountAmount"
+      <div v-else>
+        <!-- Stripe Payment Element step -->
+        <div v-if="showStripePayment && stripeClientSecret && stripePublishableKey" class="max-w-2xl mx-auto mb-16">
+          <StripePayment
+            :publishable-key="stripePublishableKey"
+            :client-secret="stripeClientSecret"
             :total="total"
-            :loading="loading"
-            :error="checkoutError"
-            @place-order="handlePlaceOrder"
+            @success="handleStripeSuccess"
+            @cancel="showStripePayment = false"
           />
         </div>
 
-        <!-- Right Column: Additional Information -->
-        <div class="lg:sticky lg:top-8">
-          <CheckoutAdditionalInfo v-model="orderNotes" />
-        </div>
+        <!-- Billing & Order Summary details step -->
+        <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+          
+          <!-- Left Column: Billing Details & Cart Totals -->
+          <div class="space-y-16">
+            <!-- Billing Details Form -->
+            <CheckoutBillingForm v-model="form" :errors="errors" />
 
+            <!-- Cart Totals & Payments -->
+            <CheckoutOrderSummary 
+              :subtotal="subtotal"
+              :discount-amount="discountAmount"
+              :total="total"
+              :loading="loading"
+              :error="checkoutError"
+              @place-order="handlePlaceOrder"
+            />
+          </div>
+
+          <!-- Right Column: Additional Information -->
+          <div class="lg:sticky lg:top-8">
+            <CheckoutAdditionalInfo v-model="orderNotes" />
+          </div>
+
+        </div>
       </div>
 
     </div>

@@ -228,15 +228,28 @@ export function useCart() {
         throw new Error(err.message || 'Failed to place order')
       }
 
-      const order = await res.json()
-      orderDetails.value = order
+      const data = await res.json()
+      
+      if (paymentMethod === 'card' && data.clientSecret) {
+        // For Stripe card payment, we return the intent details.
+        // We do not clear the cart or set success state until payment is verified.
+        return data
+      }
+
+      orderDetails.value = data.order || data
       checkoutSuccess.value = true
       clearCart()
-      return order
+      return data
     } catch (e: any) {
       checkoutError.value = e.message || 'Failed to process checkout'
       throw new Error(checkoutError.value)
     }
+  }
+
+  const confirmStripeSuccess = (order: any) => {
+    orderDetails.value = order
+    checkoutSuccess.value = true
+    clearCart()
   }
 
   return {
@@ -249,6 +262,7 @@ export function useCart() {
     checkoutError,
     checkoutSuccess,
     orderDetails,
+    loadCart,
     addToCart,
     removeFromCart,
     updateQuantity,
@@ -256,7 +270,7 @@ export function useCart() {
     applyCoupon,
     removeCoupon,
     submitCheckout,
-    loadCart,
+    confirmStripeSuccess,
     resetCheckout
   }
 }

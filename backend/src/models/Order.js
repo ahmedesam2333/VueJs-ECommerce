@@ -44,6 +44,15 @@ const orderSchema = new mongoose.Schema(
       enum: ['cod', 'card'],
       default: 'cod',
     },
+    paymentIntentId: {
+      type: String,
+      required: false,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['unpaid', 'paid', 'failed'],
+      default: 'unpaid',
+    },
     status: {
       type: String,
       enum: ['Pending', 'Dispatched', 'Delivered', 'Cancelled'],

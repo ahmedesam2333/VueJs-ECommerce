@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "db:seed": "node src/seeders/main.js",
+    "db:seed-all": "node src/seeders/seedAll.js",
     "db:seed-users": "node src/seeders/usersSeeder.js",
     "db:seed-products": "node src/seeders/productsSeeder.js",
     "db:seed-test-users": "node src/seeders/testUsersSeeder.js"

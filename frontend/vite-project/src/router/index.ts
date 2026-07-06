@@ -65,6 +65,12 @@ const router = createRouter({
       component: () => import('../views/AdminDashboardView.vue'),
       meta: { requiresAuth: true, requiresAdmin: true }
     },
+    {
+      path: "/checkout",
+      name: "checkout",
+      component: () => import('../views/CheckoutView.vue'),
+      meta: { requiresAuth: true }
+    },
     // Error Routes
     {
       path: '/forbidden',

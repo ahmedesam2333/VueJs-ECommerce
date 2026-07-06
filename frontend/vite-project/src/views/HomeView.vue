@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import FeaturesSection from '../components/FeaturesSection.vue'
 import ReviewsSection from '../components/ReviewsSection.vue'
 import BrandsSection from '../components/BrandsSection.vue'
@@ -15,7 +16,57 @@ const latestItems = ref<any[]>([])
 const bestReviewed = ref<any[]>([])
 const onSaleItems = ref<any[]>([])
 
+// Carousel Slider state & functions
+const activeSlide = ref(0)
+const slideDirection = ref('next')
+const slides = [
+  {
+    title: 'GOPRO HERO9 BLACK',
+    subtitle: 'THE ULTIMATE ACTION CAPTURE',
+    description: 'Capture stunning 5K video and 20MP photos. Featuring HyperSmooth 3.0 stabilization, rugged waterproof design, and dual screens for perfect framing.',
+    price: '$399.00',
+    link: '/shop?search=gopro',
+    image: '/gopro.png'
+  },
+  {
+    title: 'CORAL SOUND ULTRA',
+    subtitle: 'HYBRID ACTIVE NOISE CANCELLING',
+    description: 'Immerse yourself in pure studio-quality sound. Features advanced ANC, 45-hour battery life, ultra-comfortable memory foam earcups, and smart touch controls.',
+    price: '$189.00',
+    link: '/shop?search=headphone',
+    image: '/headphones.png'
+  },
+  {
+    title: 'NEO SPORT BAND S5',
+    subtitle: 'FITNESS & WELLNESS TRACKING',
+    description: 'Track your workouts, monitor heart rate, and analyze sleep quality in style. Water-resistant up to 50m with a stunning custom fitness UI and 7-day battery life.',
+    price: '$129.00',
+    link: '/shop?search=watch',
+    image: '/watch.png'
+  }
+]
+
+const nextSlide = () => {
+  slideDirection.value = 'next'
+  activeSlide.value = (activeSlide.value + 1) % slides.length
+}
+
+const prevSlide = () => {
+  slideDirection.value = 'prev'
+  activeSlide.value = (activeSlide.value - 1 + slides.length) % slides.length
+}
+
+const goToSlide = (index: number) => {
+  slideDirection.value = index > activeSlide.value ? 'next' : 'prev'
+  activeSlide.value = index
+}
+
+let slideInterval: any
+
 onMounted(async () => {
+  // Start slide autoplay
+  slideInterval = setInterval(nextSlide, 8000)
+
   try {
     const res = await fetch(`${API_BASE_URL}/api/home`)
     const data = await res.json()
@@ -30,28 +81,108 @@ onMounted(async () => {
     console.error('Error fetching home data:', error)
   }
 })
+
+onUnmounted(() => {
+  if (slideInterval) {
+    clearInterval(slideInterval)
+  }
+})
 </script>
 
 <template>
   <div class="leading-relaxed">
-    <!-- Hero Section -->
-    <section class="w-full bg-[#f8f8f8] mb-20 relative overflow-hidden">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32 flex flex-col md:flex-row items-center justify-between relative z-10">
-        <button class="hidden md:flex absolute left-4 bg-white border border-gray-200 w-10 h-10 justify-center items-center cursor-pointer text-gray-400 hover:text-secondary hover:border-secondary transition-colors rounded-full shadow-sm z-20">&lt;</button>
+    <!-- Hero Slider Section -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 mb-20">
+      <div class="relative overflow-hidden rounded-3xl h-[480px] md:h-[540px] border border-gray-100 bg-[#f9f9fa]">
         
-        <div class="w-full md:w-1/2 md:pl-16 mb-10 md:mb-0">
-          <h1 class="text-4xl md:text-5xl font-bold tracking-widest text-gray-900 mb-4 leading-tight">GOPRO HERO9 BLACK</h1>
-          <p class="text-gray-500 mb-8 text-sm max-w-sm">Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</p>
-          <button @click="router.push('/shop')" class="bg-secondary text-white font-medium tracking-wide py-3 px-10 text-sm rounded-full shadow-sm hover:opacity-90 transition-opacity cursor-pointer">SHOP NOW</button>
+        <!-- Background Ambient Glows -->
+        <div class="absolute top-0 right-0 w-96 h-96 bg-secondary/5 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-secondary/10 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+
+        <!-- Slides -->
+        <Transition :name="slideDirection === 'next' ? 'slide-next' : 'slide-prev'">
+          <div 
+            :key="activeSlide" 
+            class="absolute inset-0 flex flex-col md:flex-row items-center justify-between px-8 md:px-20 py-12 md:py-0"
+          >
+            <!-- Text Content -->
+            <div class="w-full md:w-1/2 text-left z-10 space-y-4 md:space-y-6">
+              
+              <h1 class="text-3xl md:text-5xl font-black tracking-tight text-gray-900 leading-tight uppercase">
+                {{ slides[activeSlide].title }}
+              </h1>
+              
+              <p class="text-xs md:text-sm font-semibold tracking-wider text-secondary/90 uppercase">
+                {{ slides[activeSlide].subtitle }}
+              </p>
+              
+              <p class="text-xs md:text-sm text-gray-500 max-w-md leading-relaxed font-normal">
+                {{ slides[activeSlide].description }}
+              </p>
+              
+              <!-- Price & CTA -->
+              <div class="flex items-center gap-6 pt-2">
+                <div>
+                  <span class="block text-[10px] text-gray-400 uppercase tracking-widest font-bold">Special Price</span>
+                  <span class="text-2xl font-black text-gray-900">{{ slides[activeSlide].price }}</span>
+                </div>
+                <button 
+                  @click="router.push(slides[activeSlide].link)" 
+                  class="bg-secondary text-white font-bold tracking-widest py-3.5 px-8 text-xs rounded-full hover:bg-opacity-90 active:scale-[0.98] transition-all cursor-pointer uppercase"
+                >
+                  Shop Now
+                </button>
+              </div>
+            </div>
+            
+            <!-- Image Area -->
+            <div class="w-full md:w-1/2 flex justify-center md:justify-end relative mt-6 md:mt-0">
+              <!-- Glowing Accent Backdrop -->
+              <div class="absolute bg-secondary/10 rounded-full w-72 h-72 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 blur-3xl -z-10 animate-pulse"></div>
+              
+              <!-- Floating Image -->
+              <img 
+                :src="slides[activeSlide].image" 
+                :alt="slides[activeSlide].title" 
+                class="w-[68%] md:w-[82%] max-w-md object-contain mix-blend-multiply drop-shadow-[0_15px_30px_rgba(255,101,67,0.15)] animate-float select-none pointer-events-none" 
+              />
+            </div>
+          </div>
+        </Transition>
+
+        <!-- Slider Controls -->
+        <div class="absolute inset-x-0 bottom-6 flex justify-between items-center px-8 z-25">
+          <!-- Slide indicators -->
+          <div class="flex gap-2">
+            <button 
+              v-for="(_, index) in slides" 
+              :key="index"
+              @click="goToSlide(index)"
+              class="h-1.5 rounded-full transition-all duration-300 cursor-pointer"
+              :class="activeSlide === index ? 'w-8 bg-secondary' : 'w-2 bg-gray-200 hover:bg-gray-300'"
+              :aria-label="`Go to slide ${index + 1}`"
+            ></button>
+          </div>
+
+          <!-- Navigation arrows -->
+          <div class="flex gap-2">
+            <button 
+              @click="prevSlide"
+              class="w-10 h-10 flex justify-center items-center rounded-full border border-gray-200 bg-white text-gray-500 hover:text-secondary hover:border-secondary hover:shadow-sm transition-all active:scale-90 cursor-pointer text-center"
+              aria-label="Previous Slide"
+            >
+              <ChevronLeft class="w-5 h-5" />
+            </button>
+            <button 
+              @click="nextSlide"
+              class="w-10 h-10 flex justify-center items-center rounded-full border border-gray-200 bg-white text-gray-500 hover:text-secondary hover:border-secondary hover:shadow-sm transition-all active:scale-90 cursor-pointer text-center"
+              aria-label="Next Slide"
+            >
+              <ChevronRight class="w-5 h-5" />
+            </button>
+          </div>
         </div>
-        
-        <div class="w-full md:w-1/2 flex justify-center md:justify-end relative">
-          <!-- decorative circle behind the product -->
-          <div class="absolute bg-white/40 rounded-full w-96 h-96 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 -z-10 blur-xl"></div>
-          <img src="/gopro.png" alt="GoPro Hero 9" class="w-4/5 max-w-md drop-shadow-2xl" />
-        </div>
-        
-        <button class="hidden md:flex absolute right-4 bg-white border border-gray-200 w-10 h-10 justify-center items-center cursor-pointer text-gray-400 hover:text-secondary hover:border-secondary transition-colors rounded-full shadow-sm z-20">&gt;</button>
+
       </div>
     </section>
 
@@ -233,3 +364,42 @@ onMounted(async () => {
     <BrandsSection />
   </div>
 </template>
+
+<style scoped>
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Slide transition animations (Hardware-accelerated horizontal slide) */
+.slide-next-enter-active,
+.slide-next-leave-active,
+.slide-prev-enter-active,
+.slide-prev-leave-active {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease;
+}
+
+/* Slide Next (Slides moving left) */
+.slide-next-enter-from {
+  transform: translateX(100%);
+  opacity: 0;
+}
+.slide-next-leave-to {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+
+/* Slide Prev (Slides moving right) */
+.slide-prev-enter-from {
+  transform: translateX(-100%);
+  opacity: 0;
+}
+.slide-prev-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+</style>

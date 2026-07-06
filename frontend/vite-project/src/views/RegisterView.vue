@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 import { Eye, EyeOff, Lock, Mail, User as UserIcon, Phone, MapPin, Loader2, AlertCircle } from 'lucide-vue-next'
 
+const route = useRoute()
 const router = useRouter()
 const { register } = useAuth()
 
@@ -78,7 +79,8 @@ const handleSubmit = async () => {
       address: form.address
     })
     
-    router.push('/')
+    const redirectPath = (route.query.redirect as string) || '/'
+    router.push(redirectPath)
   } catch (err: any) {
     console.error('Registration error:', err)
     errors.general = err.message || 'Registration failed. Please check your inputs.'

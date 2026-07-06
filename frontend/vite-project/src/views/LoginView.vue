@@ -77,7 +77,7 @@ const handleSubmit = async () => {
       </h2>
       <p class="mt-2 text-sm text-gray-600">
         Or
-        <router-link to="/register" class="font-medium text-secondary hover:text-secondary/90 hover:underline">
+        <router-link :to="{ path: '/register', query: { redirect: route.query.redirect } }" class="font-medium text-secondary hover:text-secondary/90 hover:underline">
           register a new account
         </router-link>
       </p>

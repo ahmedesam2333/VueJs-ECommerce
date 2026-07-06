@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useCart } from '../composables/useCart'
-import { useAuth } from '../composables/useAuth'
 import { 
   ShoppingBag, 
   Trash2, 
   Tag, 
-  MapPin, 
-  CreditCard, 
   Loader2, 
-  CheckCircle,
   AlertCircle,
+  CheckCircle,
   Truck
 } from 'lucide-vue-next'
 
@@ -25,14 +22,8 @@ const {
   removeCoupon, 
   removeFromCart, 
   updateQuantity,
-  submitCheckout,
-  checkoutSuccess,
-  orderDetails,
-  checkoutError,
   resetCheckout
 } = useCart()
-
-const { isAuthenticated } = useAuth()
 
 onMounted(() => {
   // Always reset checkout success state when loading the cart page
@@ -49,17 +40,6 @@ const couponCode = ref('')
 const couponLoading = ref(false)
 const couponError = ref('')
 const couponSuccessMsg = ref('')
-
-const shippingAddress = ref('')
-const guestCustomer = reactive({
-  name: '',
-  email: '',
-  phone: '',
-  address: ''
-})
-const paymentMethod = ref('cod')
-const checkoutLoading = ref(false)
-const addressError = ref('')
 
 const handleApplyCoupon = async () => {
   if (!couponCode.value) return
@@ -90,31 +70,6 @@ const handleQuantityChange = (productId: string, qty: number) => {
     alert(err.message || 'Failed to update quantity')
   }
 }
-
-const handleCheckout = async () => {
-  addressError.value = ''
-
-  const address = isAuthenticated.value ? shippingAddress.value : guestCustomer.address
-
-  if (!isAuthenticated.value && (!guestCustomer.name.trim() || !guestCustomer.email.trim() || !guestCustomer.phone.trim() || !guestCustomer.address.trim())) {
-    addressError.value = 'Name, email, phone, and address are required'
-    return
-  }
-
-  if (!address.trim()) {
-    addressError.value = 'Shipping address is required'
-    return
-  }
-
-  checkoutLoading.value = true
-  try {
-    await submitCheckout(address, paymentMethod.value, isAuthenticated.value ? undefined : guestCustomer)
-  } catch (err: any) {
-    // Error is set globally in composable
-  } finally {
-    checkoutLoading.value = false
-  }
-}
 </script>
 
 <template>
@@ -131,47 +86,8 @@ const handleCheckout = async () => {
 
     <h1 class="text-2xl font-extrabold text-gray-900 mb-8 tracking-tight">Shopping Cart</h1>
 
-    <!-- ORDER PLACED SUCCESS STATE -->
-    <div v-if="checkoutSuccess && orderDetails" class="bg-white border border-emerald-100 rounded-lg p-10 text-center max-w-2xl mx-auto shadow-sm">
-      <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6">
-        <CheckCircle class="w-10 h-10" />
-      </div>
-      
-      <h2 class="text-2xl font-extrabold text-gray-900 mb-2">Order Placed Successfully!</h2>
-      <p class="text-gray-500 text-sm mb-6 leading-relaxed">
-        Thank you for your purchase! Your order has been registered and is now processing.
-      </p>
-
-      <div class="bg-gray-50 rounded-lg p-6 mb-8 text-left border border-gray-100">
-        <div class="flex justify-between items-center pb-3 border-b border-gray-200/50 mb-3 text-sm">
-          <span class="text-gray-400 font-medium">Order ID</span>
-          <span class="font-mono font-bold text-gray-800">{{ orderDetails._id }}</span>
-        </div>
-        <div class="flex justify-between items-center pb-3 border-b border-gray-200/50 mb-3 text-sm">
-          <span class="text-gray-400 font-medium">Total Amount</span>
-          <span class="font-bold text-secondary text-base">${{ orderDetails.totalAmount.toFixed(2) }}</span>
-        </div>
-        <div class="flex justify-between items-center pb-3 border-b border-gray-200/50 mb-3 text-sm">
-          <span class="text-gray-400 font-medium">Payment Method</span>
-          <span class="font-semibold text-gray-700 uppercase">{{ orderDetails.paymentMethod }}</span>
-        </div>
-        <div class="text-sm">
-          <span class="text-gray-400 font-medium block mb-1">Shipping Address</span>
-          <span class="text-gray-700 font-semibold">{{ orderDetails.shippingAddress }}</span>
-        </div>
-      </div>
-
-      <router-link 
-        to="/shop" 
-        @click="resetCheckout"
-        class="bg-secondary text-white font-bold text-sm tracking-wide py-3.5 px-8 rounded shadow hover:opacity-95 active:scale-95 transition-all inline-block uppercase cursor-pointer"
-      >
-        Continue Shopping
-      </router-link>
-    </div>
-
     <!-- EMPTY CART STATE -->
-    <div v-else-if="cartItems.length === 0" class="bg-white border border-gray-100 rounded-lg p-16 text-center max-w-xl mx-auto shadow-sm">
+    <div v-if="cartItems.length === 0" class="bg-white border border-gray-100 rounded-lg p-16 text-center max-w-xl mx-auto shadow-sm">
       <div class="w-20 h-20 bg-secondary/10 text-secondary rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce">
         <ShoppingBag class="w-10 h-10" />
       </div>
@@ -345,125 +261,22 @@ const handleCheckout = async () => {
 
         <!-- Checkout Form details -->
         <div class="bg-white border border-gray-100 rounded-lg p-6 shadow-sm text-left">
-          <h2 class="text-sm font-bold text-gray-800 uppercase tracking-widest border-b border-gray-100 pb-4 mb-4">Shipping & Payment</h2>
+          <h2 class="text-sm font-bold text-gray-800 uppercase tracking-widest border-b border-gray-100 pb-4 mb-4">Checkout</h2>
           
-          <div class="space-y-4">
-            
-            <!-- Customer and address fields -->
-            <div v-if="!isAuthenticated" class="space-y-3">
-              <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Name</label>
-                <input
-                  v-model="guestCustomer.name"
-                  type="text"
-                  placeholder="Enter your name"
-                  class="w-full bg-white border border-gray-200 rounded-md py-2 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
-                  :class="addressError && !guestCustomer.name.trim() ? 'border-red-300' : ''"
-                />
-              </div>
+          <p class="text-gray-500 text-xs mb-6 leading-relaxed">
+            Ready to complete your purchase? Click below to proceed to checkout where you can specify your shipping information and choose credit/debit card or cash on delivery options.
+          </p>
 
-              <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Email</label>
-                <input
-                  v-model="guestCustomer.email"
-                  type="email"
-                  placeholder="Enter your email"
-                  class="w-full bg-white border border-gray-200 rounded-md py-2 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
-                  :class="addressError && !guestCustomer.email.trim() ? 'border-red-300' : ''"
-                />
-              </div>
-
-              <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Phone</label>
-                <input
-                  v-model="guestCustomer.phone"
-                  type="tel"
-                  placeholder="Enter your phone"
-                  class="w-full bg-white border border-gray-200 rounded-md py-2 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
-                  :class="addressError && !guestCustomer.phone.trim() ? 'border-red-300' : ''"
-                />
-              </div>
-
-              <div>
-                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <MapPin class="w-3.5 h-3.5 text-gray-400" /> Address
-                </label>
-                <textarea
-                  v-model="guestCustomer.address"
-                  rows="3"
-                  placeholder="Enter full delivery address"
-                  class="w-full bg-white border border-gray-200 rounded-md py-2 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
-                  :class="addressError && !guestCustomer.address.trim() ? 'border-red-300' : ''"
-                ></textarea>
-              </div>
-            </div>
-
-            <div v-else>
-              <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                <MapPin class="w-3.5 h-3.5 text-gray-400" /> Shipping Address
-              </label>
-              <textarea
-                v-model="shippingAddress"
-                rows="3"
-                placeholder="Enter full delivery address"
-                class="w-full bg-white border border-gray-200 rounded-md py-2 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
-                :class="addressError ? 'border-red-300' : ''"
-              ></textarea>
-            </div>
-
-            <p v-if="addressError" class="text-xs text-red-600 mt-1 flex items-center gap-1 font-semibold">
-              <AlertCircle class="w-3.5 h-3.5" /> {{ addressError }}
-            </p>
-
-            <!-- Payment selection -->
-            <div>
-              <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                <CreditCard class="w-3.5 h-3.5 text-gray-400" /> Payment Method
-              </label>
-              
-              <div class="space-y-2">
-                <label class="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded p-3 text-xs font-semibold text-gray-700 select-none cursor-pointer">
-                  <input 
-                    type="radio" 
-                    value="cod" 
-                    v-model="paymentMethod" 
-                    class="accent-secondary rounded-full cursor-pointer" 
-                  />
-                  <span>Cash On Delivery (COD)</span>
-                </label>
-                
-                <label class="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded p-3 text-xs font-semibold text-gray-700 select-none cursor-pointer">
-                  <input 
-                    type="radio" 
-                    value="card" 
-                    v-model="paymentMethod" 
-                    class="accent-secondary rounded-full cursor-pointer" 
-                  />
-                  <span>Credit / Debit Card (Simulated)</span>
-                </label>
-              </div>
-            </div>
-
-            <!-- Checkout error alert -->
-            <div v-if="checkoutError" class="bg-red-50 border-l-4 border-red-500 p-4 rounded text-xs text-red-700 font-medium flex gap-2">
-              <AlertCircle class="w-4 h-4 text-red-500 shrink-0" />
-              <span>{{ checkoutError }}</span>
-            </div>
-
-            <!-- Action submit -->
-            <button 
-              @click="handleCheckout"
-              :disabled="checkoutLoading"
-              class="w-full bg-secondary text-white font-bold text-sm tracking-widest py-4 px-6 rounded shadow hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center gap-2 uppercase cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed"
-            >
-              <Loader2 v-if="checkoutLoading" class="w-4 h-4 animate-spin" />
-              <ShoppingBag class="w-4 h-4" /> Place Order
-            </button>
-            
-            <div class="flex items-center justify-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-wider text-center mt-2">
-              <Truck class="w-3.5 h-3.5" /> 2-3 business days delivery
-            </div>
-
+          <!-- Action submit -->
+          <router-link 
+            to="/checkout"
+            class="w-full bg-secondary text-white font-bold text-sm tracking-widest py-4 px-6 rounded shadow hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center gap-2 uppercase cursor-pointer block text-center"
+          >
+            <ShoppingBag class="w-4 h-4" /> Proceed to Checkout
+          </router-link>
+          
+          <div class="flex items-center justify-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-wider text-center mt-4">
+            <Truck class="w-3.5 h-3.5" /> 2-3 business days delivery
           </div>
         </div>
 

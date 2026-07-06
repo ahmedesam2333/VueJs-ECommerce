@@ -360,6 +360,24 @@ const handleToggleRestrictUser = async (userObj: any) => {
   }
 }
 
+const handleToggleApproveUser = async (userObj: any) => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/users/${userObj._id}/status`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token.value}`
+      },
+      body: JSON.stringify({ isApproved: !userObj.isApproved })
+    })
+    if (res.ok) {
+      fetchUsers()
+    }
+  } catch (err) {
+    console.error('Error updating user approval:', err)
+  }
+}
+
 const handleChangeUserRole = async (userId: string, newRole: string) => {
   try {
     const res = await fetch(`http://localhost:5000/api/users/${userId}/role`, {
@@ -843,9 +861,10 @@ onMounted(() => {
                 </td>
                 <td class="p-4">
                   <span 
-                    class="text-[10px] font-bold px-2 py-0.5 rounded shadow-sm border border-emerald-100 bg-emerald-50 text-emerald-600"
+                    class="text-[10px] font-bold px-2 py-0.5 rounded shadow-sm border"
+                    :class="usr.isApproved ? 'border-emerald-100 bg-emerald-50 text-emerald-600' : 'border-amber-100 bg-amber-50 text-amber-600'"
                   >
-                    Approved
+                    {{ usr.isApproved ? 'Approved' : 'Not Approved' }}
                   </span>
                 </td>
                 <td class="p-4">
@@ -858,6 +877,18 @@ onMounted(() => {
                 </td>
                 <td class="p-4 text-right">
                   <div class="flex justify-end gap-1.5">
+                    <button
+                      @click="handleToggleApproveUser(usr)"
+                      class="p-1 px-2.5 text-xs border font-bold rounded cursor-pointer transition-all"
+                      :class="usr.isApproved
+                        ? 'border-amber-100 bg-amber-50 text-amber-600 hover:bg-amber-100'
+                        : 'border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100'"
+                      title="Approve/Unapprove User"
+                      :disabled="usr._id === user?._id"
+                    >
+                      <span v-if="usr.isApproved">Unapprove</span>
+                      <span v-else>Approve</span>
+                    </button>
                     <button 
                       @click="handleToggleRestrictUser(usr)"
                       class="p-1 px-2.5 text-xs border font-bold rounded cursor-pointer transition-all"

@@ -56,8 +56,7 @@ const router = createRouter({
     {
       path: '/cart',
       name: 'cart',
-      component: () => import('../views/CartView.vue'),
-      meta: { requiresAuth: true }
+      component: () => import('../views/CartView.vue')
     },
     // Admin Dashboard Route
     {

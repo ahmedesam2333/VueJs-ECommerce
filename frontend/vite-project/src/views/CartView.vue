@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useCart } from '../composables/useCart'
+import { useAuth } from '../composables/useAuth'
 import { 
   ShoppingBag, 
   Trash2, 
@@ -31,6 +32,8 @@ const {
   resetCheckout
 } = useCart()
 
+const { isAuthenticated } = useAuth()
+
 onMounted(() => {
   // Always reset checkout success state when loading the cart page
   resetCheckout()
@@ -48,6 +51,12 @@ const couponError = ref('')
 const couponSuccessMsg = ref('')
 
 const shippingAddress = ref('')
+const guestCustomer = reactive({
+  name: '',
+  email: '',
+  phone: '',
+  address: ''
+})
 const paymentMethod = ref('cod')
 const checkoutLoading = ref(false)
 const addressError = ref('')
@@ -84,14 +93,22 @@ const handleQuantityChange = (productId: string, qty: number) => {
 
 const handleCheckout = async () => {
   addressError.value = ''
-  if (!shippingAddress.value.trim()) {
+
+  const address = isAuthenticated.value ? shippingAddress.value : guestCustomer.address
+
+  if (!isAuthenticated.value && (!guestCustomer.name.trim() || !guestCustomer.email.trim() || !guestCustomer.phone.trim() || !guestCustomer.address.trim())) {
+    addressError.value = 'Name, email, phone, and address are required'
+    return
+  }
+
+  if (!address.trim()) {
     addressError.value = 'Shipping address is required'
     return
   }
 
   checkoutLoading.value = true
   try {
-    await submitCheckout(shippingAddress.value, paymentMethod.value)
+    await submitCheckout(address, paymentMethod.value, isAuthenticated.value ? undefined : guestCustomer)
   } catch (err: any) {
     // Error is set globally in composable
   } finally {
@@ -332,22 +349,71 @@ const handleCheckout = async () => {
           
           <div class="space-y-4">
             
-            <!-- Address field -->
-            <div>
+            <!-- Customer and address fields -->
+            <div v-if="!isAuthenticated" class="space-y-3">
+              <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Name</label>
+                <input
+                  v-model="guestCustomer.name"
+                  type="text"
+                  placeholder="Enter your name"
+                  class="w-full bg-white border border-gray-200 rounded-md py-2 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
+                  :class="addressError && !guestCustomer.name.trim() ? 'border-red-300' : ''"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Email</label>
+                <input
+                  v-model="guestCustomer.email"
+                  type="email"
+                  placeholder="Enter your email"
+                  class="w-full bg-white border border-gray-200 rounded-md py-2 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
+                  :class="addressError && !guestCustomer.email.trim() ? 'border-red-300' : ''"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Phone</label>
+                <input
+                  v-model="guestCustomer.phone"
+                  type="tel"
+                  placeholder="Enter your phone"
+                  class="w-full bg-white border border-gray-200 rounded-md py-2 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
+                  :class="addressError && !guestCustomer.phone.trim() ? 'border-red-300' : ''"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <MapPin class="w-3.5 h-3.5 text-gray-400" /> Address
+                </label>
+                <textarea
+                  v-model="guestCustomer.address"
+                  rows="3"
+                  placeholder="Enter full delivery address"
+                  class="w-full bg-white border border-gray-200 rounded-md py-2 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
+                  :class="addressError && !guestCustomer.address.trim() ? 'border-red-300' : ''"
+                ></textarea>
+              </div>
+            </div>
+
+            <div v-else>
               <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
                 <MapPin class="w-3.5 h-3.5 text-gray-400" /> Shipping Address
               </label>
-              <textarea 
+              <textarea
                 v-model="shippingAddress"
                 rows="3"
                 placeholder="Enter full delivery address"
                 class="w-full bg-white border border-gray-200 rounded-md py-2 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
                 :class="addressError ? 'border-red-300' : ''"
               ></textarea>
-              <p v-if="addressError" class="text-xs text-red-600 mt-1 flex items-center gap-1 font-semibold">
-                <AlertCircle class="w-3.5 h-3.5" /> {{ addressError }}
-              </p>
             </div>
+
+            <p v-if="addressError" class="text-xs text-red-600 mt-1 flex items-center gap-1 font-semibold">
+              <AlertCircle class="w-3.5 h-3.5" /> {{ addressError }}
+            </p>
 
             <!-- Payment selection -->
             <div>

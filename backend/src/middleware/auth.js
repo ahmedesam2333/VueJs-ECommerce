@@ -47,6 +47,39 @@ const protect = async (req, res, next) => {
 };
 
 /**
+ * Middleware to attach user when a valid JWT token is sent, but allow guests.
+ */
+const optionalProtect = async (req, res, next) => {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    try {
+      const token = req.headers.authorization.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
+      req.user = await User.findById(decoded.id).select('-password');
+
+      if (!req.user) {
+        return res.status(401).json({ message: 'Not authorized, user not found' });
+      }
+
+      if (req.user.isDeleted) {
+        return res.status(401).json({ message: 'Not authorized, account deleted' });
+      }
+
+      if (req.user.isRestricted) {
+        return res.status(403).json({ message: 'Access forbidden, account restricted' });
+      }
+    } catch (error) {
+      console.error('JWT verification error:', error.message);
+      return res.status(401).json({ message: 'Not authorized, token failed' });
+    }
+  }
+
+  next();
+};
+
+/**
  * Middleware to restrict access based on user roles
  * @param  {...string} roles - Allowed roles
  */
@@ -65,4 +98,4 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = { protect, authorize };
+module.exports = { protect, optionalProtect, authorize };

@@ -1,15 +1,21 @@
 const express = require('express');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
-const { protect, authorize } = require('../middleware/auth');
+const { protect, optionalProtect, authorize } = require('../middleware/auth');
 const router = express.Router();
 
-// POST place order (Protected - Customer only or any authenticated user)
-router.post('/', protect, async (req, res) => {
+// POST place order (authenticated user or guest checkout)
+router.post('/', optionalProtect, async (req, res) => {
   try {
-    const { items, shippingAddress, paymentMethod } = req.body;
+    const { items, shippingAddress, paymentMethod, guestCustomer } = req.body;
     if (!items || !items.length || !shippingAddress) {
       return res.status(400).json({ message: 'Order items and shipping address are required' });
+    }
+
+    if (!req.user) {
+      if (!guestCustomer || !guestCustomer.name || !guestCustomer.email || !guestCustomer.phone || !guestCustomer.address) {
+        return res.status(400).json({ message: 'Guest name, email, phone, and address are required' });
+      }
     }
 
     let totalAmount = 0;
@@ -40,7 +46,8 @@ router.post('/', protect, async (req, res) => {
     }
 
     const order = new Order({
-      user: req.user._id,
+      user: req.user ? req.user._id : undefined,
+      guestCustomer: req.user ? undefined : guestCustomer,
       items: orderItems,
       totalAmount,
       shippingAddress,

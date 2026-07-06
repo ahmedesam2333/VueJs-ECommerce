@@ -104,6 +104,38 @@ class ProductController {
   }
 
   /**
+   * POST /products/:id/reviews
+   * Add a review for a product
+   */
+  async addReview(req, res) {
+    try {
+      const { rating, comment } = req.body;
+
+      if (!rating || !comment || !comment.trim()) {
+        return res.status(400).json({ message: 'Rating and review text are required' });
+      }
+
+      const ratingValue = Number(rating);
+      if (ratingValue < 1 || ratingValue > 5) {
+        return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+      }
+
+      const product = await ProductService.addReview(req.params.id, req.user, {
+        rating: ratingValue,
+        comment: comment.trim(),
+      });
+
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+
+      res.status(201).json(product);
+    } catch (error) {
+      res.status(400).json({ message: 'Error adding review', error: error.message });
+    }
+  }
+
+  /**
    * DELETE /products/:id
    * Delete product by ID (Admin feature prep)
    */

@@ -12,6 +12,9 @@ router.get('/brands', ProductController.getDistinctBrands);
 // GET product by ID
 router.get('/:id', ProductController.getProductById);
 
+// POST add product review (Authenticated users)
+router.post('/:id/reviews', protect, ProductController.addReview);
+
 // POST create product (Admin feature prep)
 router.post('/', protect, authorize('Admin'), ProductController.createProduct);
 

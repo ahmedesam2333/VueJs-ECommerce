@@ -22,7 +22,9 @@ const errorMsg = ref('')
 
 // Cart states
 import { useCart } from '../composables/useCart'
+import { useAuth } from '../composables/useAuth'
 const { addToCart } = useCart()
+const { token, isAuthenticated } = useAuth()
 const cartSuccessMsg = ref('')
 const cartErrorMsg = ref('')
 const quantity = ref(1)
@@ -104,6 +106,57 @@ const productImages = computed(() => {
   if (list.length === 0 && product.value.image) list.push(product.value.image)
   return list
 })
+
+// Review form state
+const reviewRating = ref('')
+const reviewComment = ref('')
+const reviewErrorMsg = ref('')
+const reviewSuccessMsg = ref('')
+const reviewLoading = ref(false)
+
+const handleSubmitReview = async () => {
+  reviewErrorMsg.value = ''
+  reviewSuccessMsg.value = ''
+
+  if (!reviewRating.value || !reviewComment.value.trim()) {
+    reviewErrorMsg.value = 'Rating and review text are required'
+    return
+  }
+
+  if (!token.value) {
+    reviewErrorMsg.value = 'Please login to add a review.'
+    return
+  }
+
+  reviewLoading.value = true
+  try {
+    const res = await fetch(`http://localhost:5000/api/products/${product.value._id}/reviews`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token.value}`
+      },
+      body: JSON.stringify({
+        rating: Number(reviewRating.value),
+        comment: reviewComment.value
+      })
+    })
+
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.message || 'Failed to submit review')
+    }
+
+    product.value = await res.json()
+    reviewRating.value = ''
+    reviewComment.value = ''
+    reviewSuccessMsg.value = 'Review added successfully!'
+  } catch (err: any) {
+    reviewErrorMsg.value = err.message || 'Failed to submit review'
+  } finally {
+    reviewLoading.value = false
+  }
+}
 
 onMounted(() => {
   fetchProductDetails()
@@ -401,6 +454,58 @@ onMounted(() => {
           <h2 class="text-lg font-bold text-gray-900 border-b border-gray-100 pb-4 mb-6 flex items-center gap-2">
             <MessageSquare class="w-5 h-5 text-gray-400" /> CUSTOMER REVIEWS ({{ product.reviews?.length || 0 }})
           </h2>
+
+          <div class="mb-8 border border-gray-100 rounded-lg p-5 bg-gray-50/40">
+            <div v-if="!isAuthenticated" class="text-sm text-gray-600 font-medium">
+              Please login to add a review.
+            </div>
+
+            <form v-else @submit.prevent="handleSubmitReview" class="space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Rating</label>
+                  <select
+                    v-model="reviewRating"
+                    class="w-full bg-white border border-gray-200 rounded-md py-2 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
+                    :class="reviewErrorMsg && !reviewRating ? 'border-red-300' : ''"
+                  >
+                    <option value="">Select rating</option>
+                    <option value="5">5 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="2">2 Stars</option>
+                    <option value="1">1 Star</option>
+                  </select>
+                </div>
+
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Review</label>
+                  <textarea
+                    v-model="reviewComment"
+                    rows="3"
+                    placeholder="Write your review"
+                    class="w-full bg-white border border-gray-200 rounded-md py-2 px-3 text-sm focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-all"
+                    :class="reviewErrorMsg && !reviewComment.trim() ? 'border-red-300' : ''"
+                  ></textarea>
+                </div>
+              </div>
+
+              <div v-if="reviewErrorMsg" class="text-xs text-red-600 font-semibold">
+                {{ reviewErrorMsg }}
+              </div>
+              <div v-if="reviewSuccessMsg" class="text-xs text-emerald-600 font-semibold">
+                {{ reviewSuccessMsg }}
+              </div>
+
+              <button
+                type="submit"
+                :disabled="reviewLoading"
+                class="bg-secondary text-white font-bold text-xs tracking-wide py-2.5 px-6 rounded shadow hover:opacity-95 active:scale-[0.98] transition-all uppercase cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {{ reviewLoading ? 'Submitting...' : 'Submit Review' }}
+              </button>
+            </form>
+          </div>
 
           <div v-if="!product.reviews || product.reviews.length === 0" class="text-center py-10">
             <p class="text-gray-500 text-sm">No reviews yet for this product. Be the first to leave one!</p>

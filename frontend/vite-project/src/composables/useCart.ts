@@ -20,6 +20,13 @@ export interface CouponData {
   discountValue: number
 }
 
+export interface GuestCustomer {
+  name: string
+  email: string
+  phone: string
+  address: string
+}
+
 // Global shared state
 const cartItems = ref<CartItem[]>([])
 const activeCoupon = ref<CouponData | null>(null)
@@ -28,7 +35,7 @@ const checkoutSuccess = ref(false)
 const orderDetails = ref<any>(null)
 
 export function useCart() {
-  const { user, token, isAuthenticated } = useAuth()
+  const { user, token } = useAuth()
 
   // Dynamic storage key based on user email to keep carts isolated per user
   const getCartKey = () => {
@@ -92,15 +99,10 @@ export function useCart() {
 
   /**
    * Add a product to the cart.
-   * If not logged in, throws an error so the UI can prompt the user to login.
    */
   const addToCart = (product: any, quantity: number = 1) => {
     // Reset checkout success state whenever a new item is added to the cart
     resetCheckout()
-
-    if (!isAuthenticated.value) {
-      throw new Error('Please login first to add products to the cart.')
-    }
 
     const existingIndex = cartItems.value.findIndex(item => item.product._id === product._id)
 
@@ -192,8 +194,7 @@ export function useCart() {
   /**
    * Submit the order to backend
    */
-  const submitCheckout = async (shippingAddress: string, paymentMethod: string = 'cod') => {
-    if (!token.value) throw new Error('Authentication required')
+  const submitCheckout = async (shippingAddress: string, paymentMethod: string = 'cod', guestCustomer?: GuestCustomer) => {
     checkoutError.value = ''
     checkoutSuccess.value = false
     orderDetails.value = null
@@ -212,12 +213,13 @@ export function useCart() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token.value}`
+          ...(token.value ? { 'Authorization': `Bearer ${token.value}` } : {})
         },
         body: JSON.stringify({
           items: itemsPayload,
           shippingAddress,
-          paymentMethod
+          paymentMethod,
+          guestCustomer
         })
       })
 

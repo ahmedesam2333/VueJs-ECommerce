@@ -216,6 +216,35 @@ class ProductService {
   }
 
   /**
+   * Add a customer review to a product
+   */
+  async addReview(id, user, reviewData) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return null;
+    }
+
+    const product = await Product.findById(id);
+    if (!product) {
+      return null;
+    }
+
+    const rating = Number(reviewData.rating);
+    product.reviews.push({
+      user: user._id,
+      rating,
+      comment: reviewData.comment,
+      date: new Date(),
+      reviewerName: user.name,
+      reviewerEmail: user.email,
+    });
+
+    product.rating = product.reviews.reduce((total, review) => total + Number(review.rating || 0), 0) / product.reviews.length;
+
+    await product.save();
+    return await Product.findById(product._id).populate('category');
+  }
+
+  /**
    * Delete a product
    */
   async deleteProduct(id) {

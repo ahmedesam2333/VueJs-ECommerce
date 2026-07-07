@@ -11,7 +11,27 @@ const connectDB = require('./src/config/db');
 dotenv.config();
 
 // Connect to database
-connectDB();
+connectDB().then(() => {
+  const Order = require('./src/models/Order');
+  Order.find({
+    status: { $in: ['Pending', 'Processing', 'Dispatched', 'Shipped', 'Out for Delivery'] }
+  }).then(async (oldOrders) => {
+    if (oldOrders.length > 0) {
+      console.log(`Found ${oldOrders.length} orders with old status format. Migrating to new tracking terms...`);
+      for (const order of oldOrders) {
+        if (['Pending', 'Processing'].includes(order.status)) {
+          order.status = 'Preparing';
+        } else if (order.status === 'Dispatched') {
+          order.status = 'Packaged';
+        } else if (['Shipped', 'Out for Delivery'].includes(order.status)) {
+          order.status = 'In Delivery';
+        }
+        await order.save();
+      }
+      console.log('Order status migration completed successfully.');
+    }
+  }).catch(err => console.error('Order status migration failed:', err.message));
+});
 
 const app = express();
 

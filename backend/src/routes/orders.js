@@ -133,7 +133,7 @@ router.get('/my-orders', protect, async (req, res) => {
 router.put('/:id/status', protect, authorize('Admin'), async (req, res) => {
   try {
     const { status } = req.body;
-    if (!['Pending', 'Dispatched', 'Delivered', 'Cancelled'].includes(status)) {
+    if (!['Preparing', 'Packaged', 'In Delivery', 'Delivered', 'Cancelled'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status value' });
     }
 

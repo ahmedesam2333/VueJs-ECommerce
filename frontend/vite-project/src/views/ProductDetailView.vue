@@ -10,7 +10,9 @@ import {
   ShoppingBag,
   MessageSquare,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  X,
+  Heart
 } from 'lucide-vue-next'
 import { API_BASE_URL } from '../config'
 
@@ -27,22 +29,113 @@ import { useAuth } from '../composables/useAuth'
 const { addToCart } = useCart()
 const { token, isAuthenticated } = useAuth()
 const cartSuccessMsg = ref('')
+const successType = ref<'cart' | 'favorite_add' | 'favorite_remove' | ''>('')
 const cartErrorMsg = ref('')
 const quantity = ref(1)
 
+// AuthRequired Modal state
+const showAuthModal = ref(false)
+
+// Wishlist/Favorites state
+const isInWishlist = ref(false)
+
+const checkWishlistStatus = async () => {
+  if (!isAuthenticated.value || !token.value || !product.value) return
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/wishlist`, {
+      headers: {
+        'Authorization': `Bearer ${token.value}`
+      }
+    })
+    if (res.ok) {
+      const data = await res.json()
+      isInWishlist.value = data && Array.isArray(data) && data.some((item: any) => item && item._id === product.value._id)
+    }
+  } catch (err) {
+    console.error('Error checking wishlist status:', err)
+  }
+}
+
+const handleToggleWishlist = async () => {
+  if (!isAuthenticated.value) {
+    showAuthModal.value = true
+    return
+  }
+  
+  cartSuccessMsg.value = ''
+  successType.value = ''
+  cartErrorMsg.value = ''
+  
+  try {
+    if (isInWishlist.value) {
+      const res = await fetch(`${API_BASE_URL}/api/auth/wishlist/${product.value._id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token.value}`
+        }
+      })
+      if (res.ok) {
+        isInWishlist.value = false
+        successType.value = 'favorite_remove'
+        cartSuccessMsg.value = 'Removed from favorites!'
+        setTimeout(() => {
+          if (successType.value === 'favorite_remove') {
+            cartSuccessMsg.value = ''
+            successType.value = ''
+          }
+        }, 3000)
+      } else {
+        throw new Error('Failed to remove from favorites')
+      }
+    } else {
+      const res = await fetch(`${API_BASE_URL}/api/auth/wishlist`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token.value}`
+        },
+        body: JSON.stringify({ productId: product.value._id })
+      })
+      if (res.ok) {
+        isInWishlist.value = true
+        successType.value = 'favorite_add'
+        cartSuccessMsg.value = 'Added to favorites!'
+        setTimeout(() => {
+          if (successType.value === 'favorite_add') {
+            cartSuccessMsg.value = ''
+            successType.value = ''
+          }
+        }, 3000)
+      } else {
+        throw new Error('Failed to add to favorites')
+      }
+    }
+  } catch (err: any) {
+    cartErrorMsg.value = err.message || 'Failed to update favorites.'
+  }
+}
+
 const handleAddToCart = () => {
   cartSuccessMsg.value = ''
+  successType.value = ''
   cartErrorMsg.value = ''
+  if (!isAuthenticated.value) {
+    showAuthModal.value = true
+    return
+  }
   try {
     addToCart(product.value, quantity.value)
+    successType.value = 'cart'
     cartSuccessMsg.value = 'Product added to cart successfully!'
-    // Automatically clear success message after 3 seconds
+    // Automatically clear success message after 4 seconds
     setTimeout(() => {
-      cartSuccessMsg.value = ''
+      if (successType.value === 'cart') {
+        cartSuccessMsg.value = ''
+        successType.value = ''
+      }
     }, 4000)
   } catch (err: any) {
     cartErrorMsg.value = err.message || 'Failed to add product to cart.'
-    // If not authenticated, we keep it visible or add a login button
   }
 }
 
@@ -159,8 +252,11 @@ const handleSubmitReview = async () => {
   }
 }
 
-onMounted(() => {
-  fetchProductDetails()
+onMounted(async () => {
+  await fetchProductDetails()
+  if (product.value) {
+    await checkWishlistStatus()
+  }
 })
 </script>
 
@@ -403,9 +499,35 @@ onMounted(() => {
               </div>
 
               <!-- Success or Error alerts -->
-              <div v-if="cartSuccessMsg" class="mb-4 bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded text-left flex items-center justify-between">
-                <span class="text-sm text-emerald-800 font-medium">{{ cartSuccessMsg }}</span>
-                <router-link to="/cart" class="text-xs font-bold text-emerald-600 underline hover:text-emerald-700">View Cart</router-link>
+              <div v-if="cartSuccessMsg" :class="[
+                'mb-4 border-l-4 p-4 rounded text-left flex items-center justify-between transition-all duration-300',
+                successType === 'cart' ? 'bg-emerald-50 border-emerald-500' :
+                successType === 'favorite_add' ? 'bg-rose-50 border-rose-500' :
+                'bg-zinc-50 border-zinc-400'
+              ]">
+                <span :class="[
+                  'text-sm font-medium flex items-center gap-2',
+                  successType === 'cart' ? 'text-emerald-800' :
+                  successType === 'favorite_add' ? 'text-rose-800' :
+                  'text-zinc-800'
+                ]">
+                  <svg v-if="successType === 'cart'" class="w-4 h-4 text-emerald-600 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <svg v-else-if="successType === 'favorite_add'" class="w-4 h-4 text-rose-600 animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  </svg>
+                  <svg v-else class="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  {{ cartSuccessMsg }}
+                </span>
+                <router-link v-if="successType === 'cart'" to="/cart" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 underline transition-colors">
+                  View Cart
+                </router-link>
+                <router-link v-else-if="successType === 'favorite_add'" to="/favorites" class="text-xs font-bold text-rose-600 hover:text-rose-700 underline transition-colors">
+                  View Favorites
+                </router-link>
               </div>
 
               <div v-if="cartErrorMsg" class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded text-left">
@@ -443,6 +565,16 @@ onMounted(() => {
                 >
                   <ShoppingBag class="w-4 h-4" /> Add to Cart
                 </button>
+
+                <!-- Save to Favorites Button -->
+                <button 
+                  @click="handleToggleWishlist"
+                  class="bg-white hover:bg-gray-50 border p-4 rounded shadow-sm transition-all flex items-center justify-center cursor-pointer"
+                  :class="isInWishlist ? 'text-rose-500 border-rose-100 hover:bg-rose-50' : 'text-gray-400 border-gray-200'"
+                  title="Save to favorites"
+                >
+                  <Heart class="w-5 h-5" :class="isInWishlist ? 'fill-current' : ''" />
+                </button>
               </div>
 
             </div>
@@ -458,7 +590,7 @@ onMounted(() => {
 
           <div class="mb-8 border border-gray-100 rounded-lg p-5 bg-gray-50/40">
             <div v-if="!isAuthenticated" class="text-sm text-gray-600 font-medium">
-              Please login to add a review.
+              Please <button type="button" @click="showAuthModal = true" class="text-secondary hover:underline font-bold bg-transparent border-0 cursor-pointer p-0 outline-none">login</button> or <button type="button" @click="showAuthModal = true" class="text-secondary hover:underline font-bold bg-transparent border-0 cursor-pointer p-0 outline-none">register</button> to submit a review.
             </div>
 
             <form v-else @submit.prevent="handleSubmitReview" class="space-y-4">
@@ -550,6 +682,44 @@ onMounted(() => {
 
       </div>
 
+    </div>
+  </div>
+
+  <!-- Auth Required Modal -->
+  <div v-if="showAuthModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-md w-full p-8 text-center shadow-2xl relative border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+      <!-- Close button -->
+      <button 
+        @click="showAuthModal = false" 
+        class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 focus:outline-none cursor-pointer bg-transparent border-0"
+      >
+        <X class="w-6 h-6" />
+      </button>
+
+      <!-- Icon -->
+      <div class="w-16 h-16 bg-secondary/15 text-secondary rounded-full flex items-center justify-center mx-auto mb-6">
+        <ShoppingBag class="w-8 h-8" />
+      </div>
+
+      <h3 class="text-xl font-bold text-gray-900 mb-2">Authentication Required</h3>
+      <p class="text-sm text-gray-600 mb-8 leading-relaxed">
+        Please log in or create an account to continue shopping, add products to your cart, or save items to your favorites list.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-3">
+        <router-link 
+          :to="`/login?redirect=${route.fullPath}`" 
+          class="flex-1 bg-secondary text-white font-bold text-sm tracking-wide py-3 px-6 rounded shadow-md hover:opacity-95 text-center transition-all uppercase"
+        >
+          Login
+        </router-link>
+        <router-link 
+          :to="`/register?redirect=${route.fullPath}`" 
+          class="flex-1 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-bold text-sm tracking-wide py-3 px-6 rounded text-center transition-all uppercase"
+        >
+          Register
+        </router-link>
+      </div>
     </div>
   </div>
 </template>

@@ -651,12 +651,12 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Pending Orders -->
+          <!-- Preparing Orders -->
           <div class="bg-white p-6 rounded-lg border border-gray-100 shadow-sm flex items-center justify-between">
             <div>
-              <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Pending Orders</span>
+              <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Preparing Orders</span>
               <span class="text-2xl font-black text-gray-900 block">{{ stats.pendingOrders }}</span>
-              <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded mt-1.5 inline-block">Requires Dispatch</span>
+              <span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded mt-1.5 inline-block">Requires Packaging</span>
             </div>
             <div class="w-12 h-12 rounded-full flex items-center justify-center bg-amber-50 text-amber-600 shrink-0">
               <ShoppingBag class="w-5 h-5" />
@@ -1001,13 +1001,18 @@ onMounted(() => {
                   <select 
                     :value="ord.status"
                     @change="handleUpdateOrderStatus(ord._id, ($event.target as HTMLSelectElement).value)"
-                    class="bg-white border border-gray-250 rounded px-2.5 py-1 text-xs font-bold focus:outline-none focus:border-secondary cursor-pointer"
-                    :class="ord.status === 'Delivered' 
-                      ? 'text-emerald-600' 
-                      : (ord.status === 'Cancelled' ? 'text-red-500' : 'text-amber-600')"
+                    class="bg-white border border-gray-200 rounded px-2.5 py-1 text-xs font-bold focus:outline-none focus:border-secondary cursor-pointer"
+                    :class="{
+                      'text-emerald-600': ord.status === 'Delivered',
+                      'text-red-500': ord.status === 'Cancelled',
+                      'text-blue-600': ord.status === 'Packaged',
+                      'text-purple-600': ord.status === 'In Delivery',
+                      'text-amber-600': ord.status === 'Preparing'
+                    }"
                   >
-                    <option value="Pending">Pending</option>
-                    <option value="Dispatched">Dispatched</option>
+                    <option value="Preparing">Preparing</option>
+                    <option value="Packaged">Packaged</option>
+                    <option value="In Delivery">In Delivery</option>
                     <option value="Delivered">Delivered</option>
                     <option value="Cancelled">Cancelled</option>
                   </select>

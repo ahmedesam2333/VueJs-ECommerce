@@ -49,7 +49,6 @@ const handleLogout = () => {
             <li><router-link to="/" class="hover:text-secondary transition-colors" exact-active-class="text-secondary border-b-2 border-secondary pb-1">HOME</router-link></li>
             <li><router-link to="/about" class="hover:text-secondary transition-colors" exact-active-class="text-secondary border-b-2 border-secondary pb-1">ABOUT</router-link></li>
             <li><router-link to="/shop" class="hover:text-secondary transition-colors" exact-active-class="text-secondary border-b-2 border-secondary pb-1">SHOP</router-link></li>
-            <li><router-link to="/cart" class="hover:text-secondary transition-colors" exact-active-class="text-secondary border-b-2 border-secondary pb-1">CART</router-link></li>
             <li><router-link to="/contact" class="hover:text-secondary transition-colors" exact-active-class="text-secondary border-b-2 border-secondary pb-1">CONTACT</router-link></li>
             <li><router-link to="/login" class="hover:text-secondary transition-colors" exact-active-class="text-secondary border-b-2 border-secondary pb-1">LOGIN</router-link></li>
             <li><router-link to="/register" class="hover:text-secondary transition-colors" exact-active-class="text-secondary border-b-2 border-secondary pb-1">REGISTER</router-link></li>
@@ -86,12 +85,12 @@ const handleLogout = () => {
         </router-link>
 
         <!-- Favorites (Users only) -->
-        <router-link v-if="isAuthenticated && !isAdmin" to="/favorites" class="hover:text-secondary transition-colors text-gray-400 cursor-not-allowed" aria-label="Favorites">
+        <router-link v-if="isAuthenticated && !isAdmin" to="/favorites" class="hover:text-secondary transition-colors" aria-label="Favorites">
           <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
         </router-link>
 
         <!-- Cart -->
-        <router-link v-if="!isAdmin" to="/cart" class="hover:text-secondary transition-colors relative" aria-label="Shopping Cart">
+        <router-link v-if="isAuthenticated && !isAdmin" to="/cart" class="hover:text-secondary transition-colors relative" aria-label="Shopping Cart">
           <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
           <span v-if="itemsCount > 0" class="absolute -top-2 -right-2 bg-secondary text-white text-[10px] font-bold rounded-full w-[18px] h-[18px] flex items-center justify-center border border-white">
             {{ itemsCount }}
@@ -139,11 +138,6 @@ const handleLogout = () => {
             <li><router-link to="/" @click="isMobileMenuOpen = false" class="block py-1 hover:text-secondary transition-colors" exact-active-class="text-secondary font-semibold">HOME</router-link></li>
             <li><router-link to="/about" @click="isMobileMenuOpen = false" class="block py-1 hover:text-secondary transition-colors" exact-active-class="text-secondary font-semibold">ABOUT</router-link></li>
             <li><router-link to="/shop" @click="isMobileMenuOpen = false" class="block py-1 hover:text-secondary transition-colors" exact-active-class="text-secondary font-semibold">SHOP</router-link></li>
-            <li>
-              <router-link to="/cart" @click="isMobileMenuOpen = false" class="block py-1 hover:text-secondary transition-colors" exact-active-class="text-secondary font-semibold">
-                CART <span v-if="itemsCount > 0">({{ itemsCount }})</span>
-              </router-link>
-            </li>
             <li><router-link to="/contact" @click="isMobileMenuOpen = false" class="block py-1 hover:text-secondary transition-colors" exact-active-class="text-secondary font-semibold">CONTACT</router-link></li>
             <li><router-link to="/login" @click="isMobileMenuOpen = false" class="block py-1 hover:text-secondary transition-colors" exact-active-class="text-secondary font-semibold">LOGIN</router-link></li>
             <li><router-link to="/register" @click="isMobileMenuOpen = false" class="block py-1 hover:text-secondary transition-colors" exact-active-class="text-secondary font-semibold">REGISTER</router-link></li>

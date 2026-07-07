@@ -21,28 +21,28 @@ const activeSlide = ref(0)
 const slideDirection = ref('next')
 const slides = [
   {
-    title: 'GOPRO HERO9 BLACK',
-    subtitle: 'THE ULTIMATE ACTION CAPTURE',
-    description: 'Capture stunning 5K video and 20MP photos. Featuring HyperSmooth 3.0 stabilization, rugged waterproof design, and dual screens for perfect framing.',
-    price: '$399.00',
-    link: '/shop?search=gopro',
-    image: '/gopro.png'
+    title: 'ESSENCE MASCARA LASH PRINCESS',
+    subtitle: 'POPULAR BEAUTY COSMETICS',
+    description: 'The Essence Mascara Lash Princess is a popular mascara known for its volumizing and lengthening effects. Achieve dramatic lashes with this long-lasting formula.',
+    price: '$9.99',
+    link: '/shop?category=beauty',
+    image: 'https://cdn.dummyjson.com/product-images/beauty/essence-mascara-lash-princess/thumbnail.webp'
   },
   {
-    title: 'CORAL SOUND ULTRA',
-    subtitle: 'HYBRID ACTIVE NOISE CANCELLING',
-    description: 'Immerse yourself in pure studio-quality sound. Features advanced ANC, 45-hour battery life, ultra-comfortable memory foam earcups, and smart touch controls.',
-    price: '$189.00',
-    link: '/shop?search=headphone',
-    image: '/headphones.png'
+    title: 'CALVIN KLEIN CK ONE',
+    subtitle: 'CLASSIC UNISEX FRAGRANCES',
+    description: 'CK One by Calvin Klein is a classic unisex fragrance, known for its fresh and clean scent. It\'s a versatile fragrance suitable for everyday wear.',
+    price: '$49.99',
+    link: '/shop?category=fragrances',
+    image: 'https://cdn.dummyjson.com/product-images/fragrances/calvin-klein-ck-one/thumbnail.webp'
   },
   {
-    title: 'NEO SPORT BAND S5',
-    subtitle: 'FITNESS & WELLNESS TRACKING',
-    description: 'Track your workouts, monitor heart rate, and analyze sleep quality in style. Water-resistant up to 50m with a stunning custom fitness UI and 7-day battery life.',
-    price: '$129.00',
-    link: '/shop?search=watch',
-    image: '/watch.png'
+    title: 'ANNIBALE COLOMBO BED',
+    subtitle: 'LUXURIOUS HOME FURNITURE',
+    description: 'The Annibale Colombo Bed is a luxurious and elegant bed frame, crafted with high-quality materials for a comfortable and stylish bedroom.',
+    price: '$1899.99',
+    link: '/shop?category=furniture',
+    image: 'https://cdn.dummyjson.com/product-images/furniture/annibale-colombo-bed/thumbnail.webp'
   }
 ]
 

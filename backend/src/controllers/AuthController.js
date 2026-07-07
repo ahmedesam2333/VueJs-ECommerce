@@ -74,6 +74,46 @@ class AuthController {
       res.status(400).json({ message: error.message });
     }
   }
+
+  /**
+   * GET /auth/wishlist
+   */
+  async getWishlist(req, res) {
+    try {
+      const wishlist = await AuthService.getUserWishlist(req.user._id);
+      res.json(wishlist);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  /**
+   * POST /auth/wishlist
+   */
+  async addToWishlist(req, res) {
+    try {
+      const { productId } = req.body;
+      if (!productId) {
+        return res.status(400).json({ message: 'Product ID is required' });
+      }
+      const wishlist = await AuthService.addProductToWishlist(req.user._id, productId);
+      res.json(wishlist);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
+
+  /**
+   * DELETE /auth/wishlist/:productId
+   */
+  async removeFromWishlist(req, res) {
+    try {
+      const wishlist = await AuthService.removeProductFromWishlist(req.user._id, req.params.productId);
+      res.json(wishlist);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  }
 }
 
 module.exports = new AuthController();

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useAuth } from '../composables/useAuth'
-import { User, Phone, MapPin, Mail, Shield, Save, CheckCircle, AlertCircle, Loader2 } from 'lucide-vue-next'
+import { User, Phone, MapPin, Mail, Shield, Save, CheckCircle, AlertCircle, Loader2, ShoppingBag, Calendar } from 'lucide-vue-next'
 
 const { user, updateProfile } = useAuth()
 
@@ -107,6 +107,26 @@ onMounted(() => {
               <span class="font-semibold text-gray-800">{{ user?.role }}</span>
             </div>
           </div>
+        </div>
+
+        <!-- Portal Navigation -->
+        <div class="border-t border-gray-100 pt-5 mt-5 space-y-2">
+          <router-link to="/profile" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-all hover:bg-gray-50 text-gray-700" active-class="bg-secondary/10 text-secondary font-bold">
+            <User class="w-4 h-4 text-gray-400" />
+            <span>Profile Details</span>
+          </router-link>
+          <router-link to="/orders/current" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-all hover:bg-gray-50 text-gray-700" active-class="bg-secondary/10 text-secondary font-bold">
+            <ShoppingBag class="w-4 h-4 text-gray-400" />
+            <span>Current Orders</span>
+          </router-link>
+          <router-link to="/orders/history" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-all hover:bg-gray-50 text-gray-700" active-class="bg-secondary/10 text-secondary font-bold">
+            <Calendar class="w-4 h-4 text-gray-400" />
+            <span>Order History</span>
+          </router-link>
+          <router-link to="/favorites" class="flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-all hover:bg-gray-50 text-gray-700" active-class="bg-secondary/10 text-secondary font-bold">
+            <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+            <span>Favorites</span>
+          </router-link>
         </div>
       </div>
 

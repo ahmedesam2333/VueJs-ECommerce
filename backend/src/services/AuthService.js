@@ -123,6 +123,58 @@ class AuthService {
     }
     return user;
   }
+
+  /**
+   * Get user's wishlist
+   */
+  async getUserWishlist(userId) {
+    const user = await User.findById(userId).populate('wishlist');
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return (user.wishlist || []).filter(item => item !== null);
+  }
+
+  /**
+   * Add a product to the user's wishlist
+   */
+  async addProductToWishlist(userId, productId) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (!user.wishlist) {
+      user.wishlist = [];
+    }
+
+    const hasProduct = user.wishlist.some(id => id.toString() === productId.toString());
+    if (!hasProduct) {
+      user.wishlist.push(productId);
+      await user.save();
+    }
+
+    const updatedUser = await User.findById(userId).populate('wishlist');
+    return (updatedUser.wishlist || []).filter(item => item !== null);
+  }
+
+  /**
+   * Remove a product from the user's wishlist
+   */
+  async removeProductFromWishlist(userId, productId) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (user.wishlist) {
+      user.wishlist = user.wishlist.filter(id => id.toString() !== productId.toString());
+      await user.save();
+    }
+
+    const updatedUser = await User.findById(userId).populate('wishlist');
+    return (updatedUser.wishlist || []).filter(item => item !== null);
+  }
 }
 
 module.exports = new AuthService();

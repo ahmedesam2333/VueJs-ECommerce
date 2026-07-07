@@ -35,10 +35,10 @@ async function testDatabase() {
       { $group: { _id: null, total: { $sum: '$totalAmount' } } }
     ]);
     const totalRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0;
-    const pendingOrders = await Order.countDocuments({ status: 'Pending' });
+    const pendingOrders = await Order.countDocuments({ status: 'Preparing' });
 
-    console.log('Total Revenue (from completed/pending/dispatched orders):', '$' + totalRevenue.toFixed(2));
-    console.log('Pending Orders requiring dispatch:', pendingOrders);
+    console.log('Total Revenue (from completed/preparing/packaged orders):', '$' + totalRevenue.toFixed(2));
+    console.log('Preparing Orders requiring dispatch:', pendingOrders);
 
     console.log('\n--- Category list preview ---');
     const categories = await Category.find({}).limit(5);

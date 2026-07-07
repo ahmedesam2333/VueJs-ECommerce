@@ -10,7 +10,7 @@ router.get('/stats', protect, authorize('Admin'), async (req, res) => {
   try {
     const totalProducts = await Product.countDocuments({});
     const activeUsers = await User.countDocuments({ isRestricted: { $ne: true }, isDeleted: { $ne: true } });
-    const pendingOrders = await Order.countDocuments({ status: 'Pending' });
+    const pendingOrders = await Order.countDocuments({ status: 'Preparing' });
 
     // Calculate total revenue from non-cancelled orders
     const revenueResult = await Order.aggregate([
